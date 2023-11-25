@@ -1,83 +1,80 @@
-let assignmentId = "";
-let answer = "";
-
-async function fetchData() {
-  const url = `https://one00x-data-analysis.onrender.com/assignment?email=aryanchopra989@gmail.com`;
-
-  try {
-    const response = await fetch(url);
-    const assignmentId = response.headers.get('X-Assignment-ID');
-
-    if (!assignmentId) {
-      console.error('Assignment ID not found in headers.');
-      return null;
-    }
-
-    const data = await response.json();
-
-    return { assignmentId, data };
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    return null;
-  }
-}
-
-function count(response) {
-  const phraseCounts = {};
-
-  response.forEach((phrase) => {
-    if (phraseCounts[phrase]) {
-      phraseCounts[phrase]++;
-    } else {
-      phraseCounts[phrase] = 1;
-    }
-  });
-
-  let mostUsedPhrase = response[0];
-  return mostUsedPhrase;
-}
-
-async function submitAnswer(assignmentId, answer) {
-  const submitUrl = 'https://one00x-data-analysis.onrender.com/assignment?email=aryanchopra989@gmail.com';
-
-  const requestBody = {
-    assignmentId: assignmentId,
-    answer: answer,
-  };
-
-  try {
-    const submitResponse = await fetch(submitUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const secretCode = await submitResponse.json();
-    console.log('Secret Code:', secretCode);
-
- 
-  } catch (error) {
-    console.error('Error submitting', error);
-  }
-}
-
-async function main() {
-  const data = await fetchData();
-  if (!data) {
-    return;
-  }
-
-  const response = data.data;
-  assignmentId = data.assignmentId;
-  answer = count(response);
-
-  console.log(answer);
-  console.log(assignmentId);
-
+const findMaxWord = (data) => {
+  let maxWord,
+    count = 0,
+    maxCount = 0;
   
-  await submitAnswer(assignmentId, answer);
-}
-
-main();
+  for (let i = 0; i < 99; i++) {
+    if (data[i] === data[i + 1]) {
+      count++;
+    } else {
+      if (maxCount < count) {
+        maxCount = count;
+        maxWord = data[i - 1];
+      }
+      count = 0;
+    }
+  }
+  console.log(maxWord);
+  return maxWord;
+};
+  
+const getData = async () => {
+  let maxWord, xAssignmentId;
+  try {
+    await fetch(
+      "https://one00x-data-analysis.onrender.com/assignment?email=aryanchopra989@gmail.com"
+    )
+      .then((response) => {
+        if (response.ok) {
+          console.log("Call Successful.");
+          xAssignmentId = response.headers.get("x-assignment-id");
+          return response.json();
+        } else {
+          console.error("Call Not Successful");
+          throw Error;
+        }
+      })
+      .then((data) => {
+        data.sort();
+        maxWord = findMaxWord(data);
+      });
+    return { assignment_id: `${xAssignmentId}`, answer: `${maxWord}` };
+  } catch (error) {
+    console.log("API not working.");
+  }
+};
+  
+const postData = async (result) => {
+  await fetch(
+    "https://one00x-data-analysis.onrender.com/assignment?email=aryanchopra989@gmail.com",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(result),
+    }
+  )
+    .then((response) => {
+      if (response.ok) {
+        return response.json(); // Parse response as JSON
+      } else {
+        throw new Error("Response posting failed"); // Handle failure
+      }
+    })
+    .then((data) => {
+      console.log(data);
+    })
+    .catch((error) => {
+      // Handle error
+      console.log(`Error: ${error.message}`);
+    });
+};
+  
+const getThenPost = async () => {
+  let result = await getData();
+  console.log(result);
+  await postData(result);
+};
+  
+getThenPost();
